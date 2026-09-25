@@ -1,49 +1,330 @@
 # Service Desk Tool
 
-Lokalne narzędzie do diagnostyki Windows 10/11 i macOS. Czyszczenie i naprawa systemu są dostępne tylko w Windows. Skrypt nie wysyła raportów przez sieć i nie wymaga instalowania dodatkowych pakietów.
+A local diagnostic and maintenance toolkit for **Windows 10/11** and **macOS**, designed for Service Desk and IT Support workflows.
 
-## Uruchomienie dwuklikiem
+It collects system information, logs, network diagnostics, application data, and FortiClient logs into a structured HTML report and ZIP archive.
 
-| System | Zwykłe uruchomienie | Wersja administracyjna |
-|---|---|---|
-| Windows 10/11 | `Start-Windows.cmd` | `Start-Windows-Admin.cmd` — monit UAC |
-| macOS | `Start-macOS.command` | `Start-macOS-Admin.command` — Terminal poprosi o hasło konta z uprawnieniami administratora |
+Windows additionally supports selected cleanup and system-repair operations.
 
-Skopiuj lub rozpakuj **cały folder** na stację. Pliki startowe otwierają menu i próbują dopasować okno do ramki HUD: około 81 × 20 znaków w Windows oraz 70 × 16 na macOS. Jeśli terminal nie pozwala zmienić rozmiaru, program nadal działa. Menu obsługuje strzałki, Enter, cyfry i Esc.
+The tool works locally, does **not upload reports anywhere**, and requires **no additional packages or dependencies**.
 
-Na macOS oba pliki `.command` muszą zachować uprawnienie do wykonywania; dostarczony ZIP je zapisuje. Jeśli macOS blokuje plik pobrany z internetu, otwórz go z menu kontekstowego Findera zgodnie z zasadami organizacji. Wersja admin korzysta z `sudo`; nowy raport i ZIP po zakończeniu otrzymują właściciela, który uruchomił skrypt. Może być konieczne przyznanie Terminalowi dostępu do danych chronionych w ustawieniach prywatności macOS.
+## Features
 
-W Windows pliki startowe ustawiają `ExecutionPolicy Bypass` tylko dla uruchamianego procesu PowerShell. Polityka narzucona przez organizację może nadal zablokować skrypt. Przed pierwszym użyciem czynności czyszczących uruchom na maszynie testowej `./windows-service-desk.ps1 -SelfTest -Plain`; test czyści tylko własny katalog w `%TEMP%`.
+- Windows 10/11 and macOS support
+- One-click launchers
+- Interactive terminal menu
+- Full or section-based diagnostics
+- Configurable log collection period: **1–168 hours**
+- HTML diagnostic report
+- Raw diagnostic files
+- Automatic ZIP archive creation
+- Network and VPN diagnostics
+- FortiClient log collection
+- Windows cleanup tools
+- DISM and SFC repair workflow
+- No telemetry
+- No external uploads
+- No additional software dependencies
 
-## Zbieranie danych i logów
+---
 
-Po wybraniu sekcji ustaw okres od 1 do 168 godzin; domyślnie jest to 24 godziny. **Pełny raport** uruchamia wszystkie sekcje. Administrator może odczytać więcej źródeł, ale nie każda instalacja ma wszystkie wymienione logi.
+## Quick Start
 
-| Sekcja macOS | Co zapisuje |
+Copy or extract the **entire repository folder** to the target machine.
+
+### Windows
+
+| Mode | Launcher |
 |---|---|
-| System i sprzęt | Dane `system_profiler` o systemie i sprzęcie |
-| Sieć i VPN | Interfejsy, DNS, trasy oraz do 3000 ostatnich wpisów z dziennika macOS dotyczących sieci i Network Extension |
-| Dyski i wydajność | Wolne miejsce, pamięć i procesy |
-| Aplikacje i aktualizacje | Lista aplikacji, pakietów i historia aktualizacji |
-| Zdarzenia systemowe | Do 5000 ostatnich błędów i awarii z dziennika macOS oraz dostępne pliki `system.log`, `install.log` i raporty diagnostyczne użytkownika/systemu |
-| FortiClient | Lokalne pliki logów Fortinet/FortiClient oraz do 5000 ostatnich wpisów procesów FortiClient z dziennika macOS |
+| Standard | `Start-Windows.cmd` |
+| Administrator | `Start-Windows-Admin.cmd` |
 
-Pliki macOS są kopiowane do `raw/mac-logs/`, a lokalne pliki FortiClient do `raw/forticlient/`. Każdy z tych katalogów ma `manifest.txt` ze źródłami, liczbą plików i błędami odczytu. Dodatkowe wyciągi z dziennika macOS trafiają do `network-events.txt`, `events.txt` i `forticlient-unified.txt`. Na Windows pełny raport, „Sieć i VPN” oraz „FortiClient” automatycznie dołączają dostępne lokalne logi FortiClient. Nie trzeba ręcznie wskazywać eksportu.
+The administrator version triggers a standard UAC prompt.
 
-Kopiowanie plików FortiClient obejmuje maksymalnie 80 plików, 50 MB na plik i 250 MB łącznie. Kopiowanie innych plików logów macOS obejmuje maksymalnie 100 plików, 50 MB na plik i 200 MB łącznie. Filtr okresu dla plików używa daty ostatniej modyfikacji. Wyciągi z dziennika macOS mają limit liczby wpisów i czasu wykonania, więc przy bardzo dużym ruchu mogą nie obejmować całego okresu.
+### macOS
 
-## Wynik
+| Mode | Launcher |
+|---|---|
+| Standard | `Start-macOS.command` |
+| Administrator | `Start-macOS-Admin.command` |
 
-Każda sesja tworzy folder z `report.html`, surowymi wynikami w `raw/` i archiwum ZIP. Znajdziesz je w `reports/` obok skryptu. Możesz zmienić lokalizację raportów zmienną `SDT_REPORTS`. Przejrzyj pakiet przed dołączeniem go do zgłoszenia: nazwy użytkowników, adresy, dane sieciowe i treść logów mogą być poufne.
+The administrator version uses `sudo` and may request the password of a local administrator account.
 
-Automatycznie zebrane pliki FortiClient **nie są pełnym pakietem Diagnostic Tool** eksportowanym z interfejsu Fortinet. Jeśli źródło nie istnieje, logowanie w aplikacji jest wyłączone albo system odmawia dostępu, raport to pokaże. Skrypt nie zmienia ustawień FortiClient ani niczego nie wysyła.
+The launchers open the interactive Service Desk Tool menu and attempt to resize the terminal window for the HUD interface.
 
-## Czyszczenie Windows
+If the terminal does not allow window resizing, the tool will continue working normally.
 
-Każdą operację zaznacza się osobno. Ostatni ekran wymaga wpisania `USUN`. Pliki używane przez system są pomijane. `cleanmgr` otwiera okno systemowe, w którym technik wybiera kategorie. Czyszczenie pobranych aktualizacji omija przebieg przy aktywnej aktualizacji i próbuje przywrócić wcześniej uruchomione usługi. `Prefetch` jest osobną, domyślnie niezaznaczoną pozycją.
+Navigation supports:
 
-DISM i SFC są w osobnym menu. Mogą trwać kilkadziesiąt minut; nie zamykaj wtedy terminala. Po niepowodzeniu DISM narzędzie pomija SFC i zapisuje przyczynę w raporcie.
+- Arrow keys
+- Enter
+- Number keys
+- Esc
 
-## Sprawdzenie
+---
 
-Składnię skryptu macOS i zapytania `log show` sprawdzono na macOS, a kopiowanie plików i ZIP na próbnych danych. Wersja Windows przeszła kontrolę składni w PowerShell 7 na macOS; jej działania systemowe wymagają testu na Windows 10/11 przed użyciem produkcyjnym. Wersję admin macOS należy sprawdzić na stacji testowej z kontem administratora.
+## macOS Notes
+
+The `.command` launchers must retain executable permissions.
+
+The provided ZIP package preserves these permissions.
+
+If macOS blocks a downloaded script, open it through Finder using **Right Click → Open**, according to your organization's security policy.
+
+Some diagnostic sources may require Terminal to have access to protected system data under:
+
+`System Settings → Privacy & Security`
+
+The administrator launcher automatically restores ownership of generated reports and ZIP archives to the user who started the tool.
+
+---
+
+## Windows Notes
+
+The Windows launchers use:
+
+```powershell
+ExecutionPolicy Bypass
+```
+
+only for the PowerShell process running the tool.
+
+Group Policy or other organization-level security policies may still prevent the script from executing.
+
+Before using cleanup functionality for the first time, run the built-in self-test on a test workstation:
+
+```powershell
+./windows-service-desk.ps1 -SelfTest -Plain
+```
+
+The self-test only operates inside its own temporary directory under `%TEMP%`.
+
+---
+
+## Diagnostics
+
+When starting a diagnostic section, you can select a time range between:
+
+`1–168 hours`
+
+The default is:
+
+`24 hours`
+
+The **Full Report** option runs all available diagnostic sections.
+
+Running the tool with administrator privileges may provide access to additional logs and system information.
+
+Not every operating system installation contains every supported log source.
+
+---
+
+## macOS Diagnostic Sections
+
+| Section | Collected data |
+|---|---|
+| System & Hardware | System and hardware information from `system_profiler` |
+| Network & VPN | Interfaces, DNS configuration, routes and up to 3000 recent network / Network Extension log entries |
+| Disks & Performance | Disk usage, memory information and running processes |
+| Applications & Updates | Installed applications, packages and update history |
+| System Events | Up to 5000 recent errors and crashes, available `system.log`, `install.log` and diagnostic reports |
+| FortiClient | Local Fortinet/FortiClient logs and up to 5000 recent FortiClient-related unified log entries |
+
+Collected macOS logs are stored under:
+
+```text
+raw/mac-logs/
+```
+
+FortiClient files are stored under:
+
+```text
+raw/forticlient/
+```
+
+Each directory contains a `manifest.txt` file describing:
+
+- collected sources
+- number of copied files
+- read errors
+- unavailable sources
+
+Additional macOS Unified Log extracts are saved as:
+
+```text
+network-events.txt
+events.txt
+forticlient-unified.txt
+```
+
+---
+
+## FortiClient Diagnostics
+
+On both Windows and macOS, the tool attempts to automatically collect available local FortiClient logs.
+
+The following report types automatically include FortiClient data where available:
+
+- Full Report
+- Network & VPN
+- FortiClient
+
+No manual FortiClient log export is required.
+
+### Collection limits
+
+FortiClient:
+
+- Maximum 80 files
+- Maximum 50 MB per file
+- Maximum 250 MB total
+
+Other macOS logs:
+
+- Maximum 100 files
+- Maximum 50 MB per file
+- Maximum 200 MB total
+
+File-based filtering uses the file's **last modification time**.
+
+Unified Log queries also have entry and execution-time limits. On systems generating a very high volume of logs, the collected data may therefore cover only part of the selected time range.
+
+Automatically collected FortiClient files are **not equivalent to the complete Diagnostic Tool package exported from the Fortinet GUI**.
+
+If a log source does not exist, logging is disabled, or access is denied, the generated report will indicate it.
+
+The tool does not modify FortiClient configuration.
+
+---
+
+## Output
+
+Every diagnostic session creates its own folder containing:
+
+```text
+report.html
+raw/
+<report>.zip
+```
+
+Reports are stored in:
+
+```text
+reports/
+```
+
+next to the main scripts.
+
+The report location can be changed using the environment variable:
+
+```text
+SDT_REPORTS
+```
+
+Before attaching the generated archive to a support ticket, review its contents.
+
+Diagnostic packages may contain sensitive information such as:
+
+- usernames
+- hostnames
+- IP addresses
+- DNS configuration
+- network information
+- installed applications
+- log contents
+
+---
+
+## Windows Cleanup
+
+Windows includes an interactive cleanup module.
+
+Every cleanup operation must be selected individually.
+
+Before execution, the final confirmation screen requires entering:
+
+```text
+USUN
+```
+
+Files currently used by Windows are skipped.
+
+The tool can also launch:
+
+```text
+cleanmgr
+```
+
+where the technician manually selects Windows cleanup categories.
+
+Downloaded Windows Update cleanup is skipped when an update operation is currently active.
+
+The tool also attempts to restore services that were running before the cleanup process.
+
+`Prefetch` cleanup is available as a separate option and is **disabled by default**.
+
+---
+
+## Windows System Repair
+
+DISM and SFC are available from a separate repair menu.
+
+Depending on the workstation, these operations may take several minutes or longer.
+
+Do not close the terminal while they are running.
+
+The repair workflow runs DISM before SFC.
+
+If DISM fails, SFC is skipped and the failure reason is recorded in the report.
+
+---
+
+## Validation Status
+
+### macOS
+
+The following components have been tested:
+
+- shell script syntax
+- `log show` queries
+- log file collection
+- ZIP archive generation
+
+The administrator workflow should still be validated on a test Mac using an administrator account before production deployment.
+
+### Windows
+
+The PowerShell script has passed syntax validation using PowerShell 7.
+
+Windows-specific system operations should be validated on a Windows 10/11 test workstation before production use.
+
+---
+
+## Privacy
+
+Service Desk Tool is designed to operate entirely on the local workstation.
+
+It does not:
+
+- send telemetry
+- upload diagnostic data
+- send reports to external services
+- modify FortiClient settings
+- require cloud connectivity
+
+Generated diagnostic reports remain on the local machine until manually copied or attached to a ticket.
+
+---
+
+## Intended Use
+
+This project is intended for:
+
+- Service Desk teams
+- Help Desk technicians
+- IT Support engineers
+- Desktop Support
+- troubleshooting Windows and macOS workstations
+- collecting diagnostic information before escalation
+
+> Always review generated diagnostic packages before sharing them outside your organization.
