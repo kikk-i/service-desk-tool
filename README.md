@@ -2,12 +2,6 @@
 
 Lokalne narzędzie do diagnostyki Windows 10/11 i macOS. Czyszczenie i naprawa systemu są dostępne tylko w Windows. Skrypt nie wysyła raportów przez sieć i nie wymaga instalowania dodatkowych pakietów.
 
-## Kod na GitHubie
-
-Repozytorium zawiera tylko skrypty i dokumentację. Folder `reports/` powstaje przy pierwszym uruchomieniu i jest ignorowany przez Git, ponieważ raporty mogą zawierać dane użytkowników oraz stacji. Przed opublikowaniem zmian sprawdź wynik `git status` i nie dodawaj raportów przez `git add -f`.
-
-Po pobraniu repozytorium uruchom odpowiedni plik startowy z poniższej tabeli. Na macOS pliki `.command` są zapisane jako wykonywalne w Git; przy kopiowaniu plików poza Git może być konieczne przywrócenie tego uprawnienia.
-
 ## Uruchomienie dwuklikiem
 
 | System | Zwykłe uruchomienie | Wersja administracyjna |
