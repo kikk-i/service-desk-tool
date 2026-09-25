@@ -1,0 +1,20 @@
+# Raporty z urządzeń użytkowników — mogą zawierać dane osobowe i poufne.
+reports/
+**/reports/
+raw/
+report.html
+status.tsv
+
+# Eksporty diagnostyczne i archiwa tworzone lokalnie.
+*.zip
+*.cab
+*.log
+*.etl
+*.logarchive/
+Diagnostic_Result*/
+
+# Pliki systemowe i edytorów.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
